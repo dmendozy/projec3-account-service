@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: account-service
+
+  cloud:
+    config:
+      uri: http://localhost:8090
+      username: root
+      password: p1w1ll0
