@@ -17,6 +17,7 @@ public class Account {
     @Id
     public String accountId;
     public String numberAccount;
+    public String typeAccount;
     public double balance;
     public List<String> customerId;
     public List<String> signatories;
