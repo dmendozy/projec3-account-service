@@ -90,6 +90,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 		</plugins>
+		<finalName>account-service</finalName>
 	</build>
 
 </project>
