@@ -18,11 +18,16 @@ public class Account {
     public String accountId;
     public String numberAccount;
     public String typeAccount;
-    public double balance;
+    public double currentBalance;
+    public int transactions;
     public List<String> customerId;
     public List<String> signatories;
 
     public Account(){
         super();
+    }
+
+    public Account(String numberAccount) {
+        this.numberAccount = numberAccount;
     }
 }
