@@ -27,7 +27,4 @@ public class Account {
         super();
     }
 
-    public Account(String numberAccount) {
-        this.numberAccount = numberAccount;
-    }
 }

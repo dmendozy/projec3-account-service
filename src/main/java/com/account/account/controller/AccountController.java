@@ -19,6 +19,7 @@ public class AccountController {
     public Flux<Account> getAllAccounts(){
         return accountService.getAll();
     }
+
     @GetMapping("{id}")
     public Mono<Account> getAccountById(@PathVariable("id") String accountId){
         return accountService.getById(accountId);

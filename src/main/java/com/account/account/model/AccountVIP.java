@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Data
 @Getter
 @Setter
+@Builder
 @Document(collection = "accountsVIP")
 public class AccountVIP extends Account {
 
