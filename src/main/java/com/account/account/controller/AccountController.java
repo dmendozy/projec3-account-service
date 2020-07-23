@@ -8,6 +8,10 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/accounts")
 public class AccountController {
@@ -39,6 +43,11 @@ public class AccountController {
     @DeleteMapping("{id}")
     public Mono<Account> deleteAccount(@PathVariable("id") String accountId){
         return accountService.delete(accountId);
+    }
+
+    @GetMapping("/customer/{customerId}")
+    public Flux<Account> findByCustomer(@PathVariable("customerId") String customerId) {
+        return accountService.getByCustomerId(customerId);
     }
 
 }
