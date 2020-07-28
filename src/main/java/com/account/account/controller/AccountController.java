@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -48,6 +49,21 @@ public class AccountController {
     @GetMapping("/customer/{customerId}")
     public Flux<Account> findByCustomer(@PathVariable("customerId") String customerId) {
         return accountService.getByCustomerId(customerId);
+    }
+
+    @GetMapping("/search/{bankId}/{firstDate}/{lastDate}")
+    public Flux<Account> getAccountsBetweenDates(@PathVariable("bankId") String bankId,
+                                                 @PathVariable("firstDate") String firstDate,
+                                                 @PathVariable("lastDate") String lastDate) {
+        LocalDate date1 = LocalDate.parse(firstDate);
+        LocalDate date2 = LocalDate.parse(lastDate);
+        return accountService.getAll()
+                .filter(account -> account.getBankId()!=null&&
+                        account.getCreationDate().compareTo(date1)>=0&&
+                        account.getCreationDate().compareTo(date2)<=0)
+                .flatMap(account -> {
+                    return accountService.getById(account.getAccountId());
+                });
     }
 
 }
