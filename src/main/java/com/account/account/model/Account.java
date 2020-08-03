@@ -23,7 +23,10 @@ public class Account {
     public String typeAccount;
     public LocalDate creationDate;
     public double currentBalance;
-    public int transactionsAmount;
+    public double commission;
+    public double commissionInterBank;
+    public int transactionsAtm;
+    public int transactionsBank;
     public List<String> customerId;
     public List<String> signatories;
     @Transient
