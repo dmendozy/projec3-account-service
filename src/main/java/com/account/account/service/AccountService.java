@@ -1,7 +1,9 @@
 package com.account.account.service;
 
 import com.account.account.model.Account;
+import com.account.account.model.AccountType;
 import com.account.account.repository.AccountRepository;
+import com.account.account.repository.AccountTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -13,6 +15,8 @@ import java.util.List;
 public class AccountService {
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private AccountTypeRepository accountTypeRepository;
 
     public Flux<Account> getAll(){
         return accountRepository.findAll();
@@ -34,4 +38,7 @@ public class AccountService {
 
     public Flux<Account> getByCustomerId(String customerId){return accountRepository.findByCustomerId(customerId);}
 
+    public Mono<AccountType> getFreeTransactions(String accountType){
+        return accountTypeRepository.findById(accountType);
+    }
 }
