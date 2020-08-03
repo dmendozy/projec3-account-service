@@ -11,7 +11,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.concurrent.ExecutionException;
 
 @RestController
 @RequestMapping("/accounts")
@@ -136,29 +135,5 @@ public class AccountController {
             });
         });
     }
-
-    @PutMapping("/bank/atm/deposit/{accountId}/{amount}")
-    public Mono depositByAtmBank(@PathVariable("accountId") String accountId,
-                                 @PathVariable("amount") double amount){
-        return accountService.getById(accountId).flatMap(account -> {
-
-            int transactionsAtm = account.getTransactionsAtm();
-            String accountTypeId = account.getTypeAccount();
-
-            return accountService.getFreeTransactions(accountTypeId).flatMap(accountType->{
-                Double balance = account.getCurrentBalance();
-                if (transactionsAtm>=accountType.getFreeAtmTransactions()){
-                    balance-=account.getCommission();
-                }
-                account.setTransactionsAtm(transactionsAtm+1);
-                account.setCurrentBalance(balance+amount);
-
-                return accountService.save(account);
-            });
-
-        });
-    }
-
-
 
 }
