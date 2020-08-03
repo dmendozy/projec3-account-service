@@ -1,9 +1,9 @@
 package com.account.account.repository;
 
-import com.account.account.model.AccountVIP;
+import com.account.account.model.AccountType;
 import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface AccountVIPRepository extends ReactiveMongoRepository<AccountVIP,String> {
+public interface AccountTypeRepository extends ReactiveMongoRepository<AccountType, String> {
 }
