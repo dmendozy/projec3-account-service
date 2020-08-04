@@ -48,6 +48,24 @@ public class AccountController {
         return accountService.delete(accountId);
     }
 
+    //Check balance
+    @GetMapping("/balance/{accountId}")
+    public Mono checkCurrentBalance(@PathVariable("accountId") String accountId){
+        return accountService.getById(accountId)
+                .map(Account::getCurrentBalance);
+    }
+
+    //Find transactions
+    @GetMapping("/transactions/{accountId}")
+    public Flux<Transaction> checkTransactions(@PathVariable("accountId") String accountId){
+        return webClientBuilder
+                .build()
+                .get()
+                .uri("http://localhost:8080/transactions/account/{accountId}",accountId)
+                .retrieve()
+                .bodyToFlux(Transaction.class);
+    }
+
     //Deposit money
     @PutMapping("/deposit/{accountId}/{amount}")
     public Mono deposit(@PathVariable("accountId") String accountId,
@@ -83,7 +101,7 @@ public class AccountController {
     }
 
     //Withdraw money
-    @PutMapping("/deposit/{accountId}/{amount}")
+    @PutMapping("/withdraw/{accountId}/{amount}")
     public Mono withdraw(@PathVariable("accountId") String accountId,
                         @PathVariable("amount") double amount){
         return accountService.getById(accountId)
