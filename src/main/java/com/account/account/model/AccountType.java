@@ -16,6 +16,7 @@ public class AccountType {
     private String typeName;
     private double minAmount;
     private double minBalance;
+    private int freeBankTransactions;
     private int freeAtmTransactions;
 
     public AccountType(){
