@@ -70,6 +70,29 @@ public class AccountController {
                 });
     }
 
+    //Account Transfer
+    @GetMapping("/transfer/{account1}/{account2}/{amount}")
+    public Mono accountTransfer(@PathVariable("account1") String account1,
+                                @PathVariable("account2") String account2,
+                                @PathVariable("amount") double amount){
+        return accountService.getById(account1)
+                .filter(origin->origin.getCurrentBalance()>=amount)
+                .flatMap(origin->{
+                    origin.setCurrentBalance(origin.getCurrentBalance()-amount);
+
+                   return accountService.getById(account2)
+                   .filter(destiny->{
+                       destiny.setCurrentBalance(destiny.getCurrentBalance()+amount);
+
+                       accountService.save(origin).subscribe();
+                       accountService.save(destiny).subscribe();
+                       return true;
+                   });
+
+                });
+    }
+
+    //Deposit ATM
     @PutMapping("/atm/deposit/{accountId}/{amount}")
     public Mono depositByAtm(@PathVariable("accountId") String accountId,
                              @PathVariable("amount") double amount){
@@ -104,6 +127,7 @@ public class AccountController {
         });
     }
 
+    //Withdraw ATM
     @PutMapping("/atm/withdraw/{accountId}/{amount}")
     public Mono withdrawByAtm(@PathVariable("accountId") String accountId,
                              @PathVariable("amount") double amount){
