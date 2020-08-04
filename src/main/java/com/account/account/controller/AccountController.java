@@ -160,4 +160,76 @@ public class AccountController {
         });
     }
 
+    //Deposit ATM to other bank
+    @PutMapping("/bank/atm/deposit/{accountId}/{amount}/{bankId}")
+    public Mono depositByAtmToAnotherBank(@PathVariable("accountId") String accountId,
+                                          @PathVariable("amount") double amount,
+                                          @PathVariable("bankId") String bankId){
+        return accountService.getById(accountId).flatMap(account -> {
+
+            int transactionsAtm = account.getTransactionsAtm();
+            String accountTypeId = account.getTypeAccount();
+
+            return accountService.getFreeTransactions(accountTypeId).flatMap(accountType->{
+                double balance = account.getCurrentBalance();
+                double commission= 0;
+                if (transactionsAtm>=accountType.getFreeAtmTransactions()&&
+                        !account.getBankId().equals(bankId)){
+                    balance-=account.getCommissionInterBank();
+                    commission =account.getCommissionInterBank();
+                }
+                Transaction transaction = new Transaction("Deposit",amount,commission,LocalDate.now(),accountId);
+                Mono<Transaction> transactionMono= webClientBuilder
+                        .build()
+                        .post()
+                        .uri("http://localhost:8084/transactions/")
+                        .body(Mono.just(transaction),Transaction.class)
+                        .retrieve()
+                        .bodyToMono(Transaction.class);
+
+                account.setTransactionsAtm(transactionsAtm+1);
+                account.setCurrentBalance(balance+amount);
+
+                return transactionMono.flatMap(t->{
+                    return accountService.save(account);
+                });
+            });
+        });
+    }
+
+    //Withdraw ATM to other bank
+    @PutMapping("/bank/atm/withdraw/{accountId}/{amount}/{bankId}")
+    public Mono withdrawByAtm(@PathVariable("accountId") String accountId,
+                              @PathVariable("amount") double amount,
+                              @PathVariable("bankId") String bankId){
+        return accountService.getById(accountId).flatMap(account -> {
+
+            int transactionsAtm = account.getTransactionsAtm();
+            String accountTypeId = account.getTypeAccount();
+
+            return accountService.getFreeTransactions(accountTypeId).flatMap(accountType->{
+                double commission = 0;
+                double balance = account.getCurrentBalance();
+                if (transactionsAtm>=accountType.getFreeAtmTransactions()&&
+                        !account.getBankId().equals(bankId)){
+                    balance-=account.getCommissionInterBank();
+                    commission= account.getCommissionInterBank();
+                }
+                Transaction transaction = new Transaction("Withdraw",amount,commission,LocalDate.now(),accountId);
+                Mono<Transaction> transactionMono= webClientBuilder
+                        .build()
+                        .post()
+                        .uri("http://localhost:8084/transactions/")
+                        .body(Mono.just(transaction),Transaction.class)
+                        .retrieve()
+                        .bodyToMono(Transaction.class);
+                if (account.getCurrentBalance()>=amount){
+                    account.setTransactionsAtm(transactionsAtm+1);
+                    account.setCurrentBalance(balance-amount);
+                }
+                return accountService.save(account);
+            });
+        });
+    }
+
 }
