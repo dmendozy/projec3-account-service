@@ -1,5 +1,6 @@
 package com.account.account.controller;
 
+import com.account.account.adds.Bank;
 import com.account.account.adds.Credit;
 import com.account.account.adds.Transaction;
 import com.account.account.model.Account;
@@ -13,7 +14,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Calendar;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/accounts")
@@ -36,8 +37,19 @@ public class AccountController {
     }
 
     @PostMapping
-    public Mono<Account> createAccount(@Validated @RequestBody Account account){
-        return accountService.save(account);
+    public Mono createAccount(@Validated @RequestBody Account account){
+        String customerId = account.getCustomerId().stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining());
+        Mono bank = webClientBuilder
+                .build()
+                .put()
+                .uri("http://localhost:8080/banks/"+account.getBankId()+"/"+customerId)
+                .retrieve()
+                .bodyToMono(Bank.class);
+        return bank.flatMap(b->{
+            return accountService.save(account);
+        });
     }
 
     @PutMapping("{id}")
