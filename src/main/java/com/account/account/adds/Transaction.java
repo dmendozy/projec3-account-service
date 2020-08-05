@@ -2,7 +2,8 @@ package com.account.account.adds;
 
 import lombok.Data;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 
 @Data
 public class Transaction {
@@ -10,15 +11,27 @@ public class Transaction {
     public String transactionName;
     public double amount;
     public double commission;
-    public LocalDate datetime;
+    public LocalDateTime dateTime;
     public String accountId;
     public String creditId;
 
-    public Transaction(String transactionName, double amount, double commission, LocalDate datetime, String accountId) {
+    public Transaction(String transactionName, double amount, double commission, LocalDateTime dateTime, String accountId) {
         this.transactionName = transactionName;
         this.amount = amount;
         this.commission = commission;
-        this.datetime = datetime;
+        this.dateTime = dateTime;
         this.accountId = accountId;
+    }
+
+    public Transaction(String transactionName, double amount, LocalDateTime dateTime, String accountId, String creditId) {
+        this.transactionName = transactionName;
+        this.amount = amount;
+        this.dateTime = dateTime;
+        this.accountId = accountId;
+        this.creditId = creditId;
+    }
+
+    public Transaction(){
+        super();
     }
 }
