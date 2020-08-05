@@ -1,5 +1,6 @@
 package com.account.account.controller;
 
+import com.account.account.adds.Credit;
 import com.account.account.adds.Transaction;
 import com.account.account.model.Account;
 import com.account.account.service.AccountService;
@@ -11,6 +12,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Calendar;
 
 @RestController
 @RequestMapping("/accounts")
@@ -83,7 +86,8 @@ public class AccountController {
                                     balance-=account.getCommission();
                                     commission=account.getCommission();
                                 }
-                                Transaction transaction = new Transaction("Deposit from Bank",amount,commission,LocalDate.now(),accountId);
+                                Transaction transaction = new Transaction("Deposit from Bank",amount,commission,LocalDateTime.now(),accountId);
+                                System.out.println(LocalDateTime.now()+"test");
                                 Mono<Transaction> transactionMono= webClientBuilder
                                         .build()
                                         .post()
@@ -117,7 +121,7 @@ public class AccountController {
                                     balance-=account.getCommission();
                                     commission=account.getCommission();
                                 }
-                                Transaction transaction = new Transaction("Withdraw from Bank",amount,commission,LocalDate.now(),accountId);
+                                Transaction transaction = new Transaction("Withdraw from Bank",amount,commission,LocalDateTime.now(),accountId);
                                 Mono<Transaction> transactionMono= webClientBuilder
                                         .build()
                                         .post()
@@ -148,7 +152,7 @@ public class AccountController {
         LocalDate date1 = LocalDate.parse(firstDate);
         LocalDate date2 = LocalDate.parse(lastDate);
         return accountService.getAll()
-                .filter(account -> account.getBankId()!=null&&
+                .filter(account -> account.getBankId().equals(bankId)&&
                         account.getCreationDate().compareTo(date1)>=0&&
                         account.getCreationDate().compareTo(date2)<=0)
                 .flatMap(account -> {
@@ -178,6 +182,39 @@ public class AccountController {
                 });
     }
 
+    //Pay credit from account
+    @GetMapping("/pay/credit/{accountId}/{creditId}/{amount}")
+    public Mono payCreditFromAccount(@PathVariable("accountId") String accountId,
+                                     @PathVariable("creditId") String creditId,
+                                     @PathVariable("amount") double amount){
+        return accountService.getById(accountId)
+                .filter(account -> account.getCurrentBalance()>=amount)
+                .flatMap(account -> {
+                    Transaction transaction = new Transaction("Pay credit from account",amount, LocalDateTime.now(),accountId,creditId);
+                    return webClientBuilder
+                            .build()
+                            .post()
+                            .uri("http://localhost:8080/transactions/")
+                            .body(Mono.just(transaction),Transaction.class)
+                            .retrieve()
+                            .bodyToMono(Transaction.class);
+                }).flatMap(transaction -> {
+                    return webClientBuilder
+                            .build()
+                            .put()
+                            .uri("http://localhost:8080/accounts/withdraw/"+accountId+"/"+amount)
+                            .retrieve()
+                            .bodyToMono(Account.class);
+                }).flatMap(credit -> {
+                    return webClientBuilder
+                            .build()
+                            .put()
+                            .uri("http://localhost:8080/credits/pay/"+creditId+"/"+amount)
+                            .retrieve()
+                            .bodyToMono(Credit.class);
+                });
+    }
+
     //Deposit ATM
     @PutMapping("/atm/deposit/{accountId}/{amount}")
     public Mono depositByAtm(@PathVariable("accountId") String accountId,
@@ -196,7 +233,7 @@ public class AccountController {
                             balance-=account.getCommission();
                             commission =account.getCommission();
                         }
-                Transaction transaction = new Transaction("Deposit from ATM",amount,commission,LocalDate.now(),accountId);
+                Transaction transaction = new Transaction("Deposit from ATM",amount,commission,LocalDateTime.now(),accountId);
                 Mono<Transaction> transactionMono= webClientBuilder
                         .build()
                         .post()
@@ -231,7 +268,7 @@ public class AccountController {
                     balance-=account.getCommission();
                     commission= account.getCommission();
                 }
-                Transaction transaction = new Transaction("Withdraw from ATM",amount,commission,LocalDate.now(),accountId);
+                Transaction transaction = new Transaction("Withdraw from ATM",amount,commission,LocalDateTime.now(),accountId);
                 Mono<Transaction> transactionMono= webClientBuilder
                         .build()
                         .post()
@@ -266,7 +303,7 @@ public class AccountController {
                     balance-=account.getCommissionInterBank();
                     commission =account.getCommissionInterBank();
                 }
-                Transaction transaction = new Transaction("Deposit from ATM interbank",amount,commission,LocalDate.now(),accountId);
+                Transaction transaction = new Transaction("Deposit from ATM interbank",amount,commission,LocalDateTime.now(),accountId);
                 Mono<Transaction> transactionMono= webClientBuilder
                         .build()
                         .post()
@@ -303,7 +340,7 @@ public class AccountController {
                     balance-=account.getCommissionInterBank();
                     commission= account.getCommissionInterBank();
                 }
-                Transaction transaction = new Transaction("Withdraw from ATM interbank",amount,commission,LocalDate.now(),accountId);
+                Transaction transaction = new Transaction("Withdraw from ATM interbank",amount,commission, LocalDateTime.now(),accountId);
                 Mono<Transaction> transactionMono= webClientBuilder
                         .build()
                         .post()
