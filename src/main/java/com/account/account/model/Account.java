@@ -32,8 +32,22 @@ public class Account {
     @Transient
     public List<String> transactions;
 
-    public Account(){
+    public Account() {
         super();
     }
 
+    public Account(String accountId, String bankId, String numberAccount, String typeAccount, LocalDate creationDate, double currentBalance, double commission, double commissionInterBank, int transactionsAtm, int transactionsBank, List<String> customerId, List<String> signatories) {
+        this.accountId = accountId;
+        this.bankId = bankId;
+        this.numberAccount = numberAccount;
+        this.typeAccount = typeAccount;
+        this.creationDate = creationDate;
+        this.currentBalance = currentBalance;
+        this.commission = commission;
+        this.commissionInterBank = commissionInterBank;
+        this.transactionsAtm = transactionsAtm;
+        this.transactionsBank = transactionsBank;
+        this.customerId = customerId;
+        this.signatories = signatories;
+    }
 }

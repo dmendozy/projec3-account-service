@@ -1,6 +1,5 @@
 package com.account.account.service;
 
-import com.account.account.model.Account;
 import com.account.account.model.AccountType;
 import com.account.account.repository.AccountTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +11,7 @@ import reactor.core.publisher.Mono;
 public class AccountTypeService {
     @Autowired
     private AccountTypeRepository accountTypeRepository;
+
 
     public Flux<AccountType> getAll() {
         return accountTypeRepository.findAll();
@@ -25,7 +25,7 @@ public class AccountTypeService {
         return accountTypeRepository.findById(typeId);
     }
 
-    public Mono update(String id, AccountType accountType){
+    public Mono update(String id, AccountType accountType) {
         return accountTypeRepository.save(accountType);
     }
 

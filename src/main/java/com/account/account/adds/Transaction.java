@@ -31,7 +31,7 @@ public class Transaction {
         this.creditId = creditId;
     }
 
-    public Transaction(){
+    public Transaction() {
         super();
     }
 }

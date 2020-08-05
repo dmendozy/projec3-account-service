@@ -12,14 +12,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document(collection = "accountsType")
 public class AccountType {
     @Id
-    private String accountTypeId;
-    private String typeName;
-    private double minAmount;
-    private double minBalance;
-    private int freeBankTransactions;
-    private int freeAtmTransactions;
+    public String accountTypeId;
+    public String typeName;
+    public double minAmount;
+    public double minBalance;
+    public int freeBankTransactions;
+    public int freeAtmTransactions;
 
-    public AccountType(){
+    public AccountType() {
         super();
     }
+
 }
