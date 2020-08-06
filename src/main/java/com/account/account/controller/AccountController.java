@@ -38,18 +38,7 @@ public class AccountController {
 
     @PostMapping
     public Mono createAccount(@Validated @RequestBody Account account) {
-        String customerId = account.getCustomerId().stream()
-                .map(String::valueOf)
-                .collect(Collectors.joining());
-        Mono bank = webClientBuilder
-                .build()
-                .put()
-                .uri("http://localhost:8080/banks/" + account.getBankId() + "/" + customerId)
-                .retrieve()
-                .bodyToMono(Bank.class);
-        return bank.flatMap(b -> {
-            return accountService.save(account);
-        });
+        return accountService.save(account);
     }
 
     @PutMapping("{id}")
@@ -76,7 +65,7 @@ public class AccountController {
         return webClientBuilder
                 .build()
                 .get()
-                .uri("http://localhost:8080/transactions/account/{accountId}", accountId)
+                .uri("http://transaction-service/transactions/account/{accountId}", accountId)
                 .retrieve()
                 .bodyToFlux(Transaction.class);
     }
@@ -103,7 +92,7 @@ public class AccountController {
                                 Mono<Transaction> transactionMono = webClientBuilder
                                         .build()
                                         .post()
-                                        .uri("http://localhost:8080/transactions/")
+                                        .uri("http://transaction-service/transactions/")
                                         .body(Mono.just(transaction), Transaction.class)
                                         .retrieve()
                                         .bodyToMono(Transaction.class);
@@ -137,7 +126,43 @@ public class AccountController {
                                 Mono<Transaction> transactionMono = webClientBuilder
                                         .build()
                                         .post()
-                                        .uri("http://localhost:8080/transactions/")
+                                        .uri("http://transaction-service/transactions/")
+                                        .body(Mono.just(transaction), Transaction.class)
+                                        .retrieve()
+                                        .bodyToMono(Transaction.class);
+                                account.setTransactionsBank(transactionsBank + 1);
+                                account.setCurrentBalance(balance - amount);
+                                return transactionMono.flatMap(t -> {
+                                    return accountService.save(account);
+                                });
+                            });
+                });
+    }
+
+    //Withdraw money interbank
+    @PutMapping("/withdraw/{accountId}/{amount}/{bankId}")
+    public Mono withdrawInterbank(@PathVariable("accountId") String accountId,
+                                  @PathVariable("amount") double amount,
+                                  @PathVariable("bankId") String bankId) {
+        return accountService.getById(accountId)
+                .filter(account -> account.getBankId().equals(bankId))
+                .flatMap(account -> {
+                    int transactionsBank = account.getTransactionsBank();
+                    String accountTypeId = account.getTypeAccount();
+
+                    return accountService.getFreeTransactions(accountTypeId)
+                            .flatMap(accountType -> {
+                                double balance = account.getCurrentBalance();
+                                double commission = 0;
+                                if (transactionsBank >= accountType.getFreeBankTransactions()) {
+                                    balance -= account.getCommission();
+                                    commission = account.getCommission();
+                                }
+                                Transaction transaction = new Transaction("Withdraw interbank", amount, commission, LocalDateTime.now(), accountId);
+                                Mono<Transaction> transactionMono = webClientBuilder
+                                        .build()
+                                        .post()
+                                        .uri("http://transaction-service/transactions/")
                                         .body(Mono.just(transaction), Transaction.class)
                                         .retrieve()
                                         .bodyToMono(Transaction.class);
@@ -206,7 +231,7 @@ public class AccountController {
                     return webClientBuilder
                             .build()
                             .post()
-                            .uri("http://localhost:8080/transactions/")
+                            .uri("http://transaction-service/transactions/")
                             .body(Mono.just(transaction), Transaction.class)
                             .retrieve()
                             .bodyToMono(Transaction.class);
@@ -214,14 +239,48 @@ public class AccountController {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://localhost:8080/accounts/withdraw/" + accountId + "/" + amount)
+                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount)
                             .retrieve()
                             .bodyToMono(Account.class);
                 }).flatMap(credit -> {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://localhost:8080/credits/pay/" + creditId + "/" + amount)
+                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount)
+                            .retrieve()
+                            .bodyToMono(Credit.class);
+                });
+    }
+
+    //Pay credit from account interbank
+    @GetMapping("/pay/credit/{bankAccountId}/{accountId}/{bankCreditId}/{creditId}/{amount}")
+    public Mono payCreditFromAccountInterbank(@PathVariable("bankAccountId") String bankAccountId,
+                                              @PathVariable("accountId") String accountId,
+                                              @PathVariable("bankCreditId") String bankCreditId,
+                                              @PathVariable("creditId") String creditId,
+                                              @PathVariable("amount") double amount) {
+        return accountService.getById(accountId)
+                .flatMap(account -> {
+                    Transaction transaction = new Transaction("Pay credit from account interbank", amount, LocalDateTime.now(), accountId, creditId);
+                    return webClientBuilder
+                            .build()
+                            .post()
+                            .uri("http://transaction-service/transactions/")
+                            .body(Mono.just(transaction), Transaction.class)
+                            .retrieve()
+                            .bodyToMono(Transaction.class);
+                }).flatMap(transaction -> {
+                    return webClientBuilder
+                            .build()
+                            .put()
+                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount + "/" + bankAccountId)
+                            .retrieve()
+                            .bodyToMono(Account.class);
+                }).flatMap(credit -> {
+                    return webClientBuilder
+                            .build()
+                            .put()
+                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount + "/" + bankCreditId)
                             .retrieve()
                             .bodyToMono(Credit.class);
                 });
@@ -249,7 +308,7 @@ public class AccountController {
                                 Mono<Transaction> transactionMono = webClientBuilder
                                         .build()
                                         .post()
-                                        .uri("http://localhost:8080/transactions/")
+                                        .uri("http://transaction-service/transactions/")
                                         .body(Mono.just(transaction), Transaction.class)
                                         .retrieve()
                                         .bodyToMono(Transaction.class);
@@ -284,7 +343,7 @@ public class AccountController {
                 Mono<Transaction> transactionMono = webClientBuilder
                         .build()
                         .post()
-                        .uri("http://localhost:8080/transactions/")
+                        .uri("http://transaction-service/transactions/")
                         .body(Mono.just(transaction), Transaction.class)
                         .retrieve()
                         .bodyToMono(Transaction.class);
@@ -319,7 +378,7 @@ public class AccountController {
                 Mono<Transaction> transactionMono = webClientBuilder
                         .build()
                         .post()
-                        .uri("http://localhost:8080/transactions/")
+                        .uri("http://transaction-service/transactions/")
                         .body(Mono.just(transaction), Transaction.class)
                         .retrieve()
                         .bodyToMono(Transaction.class);
@@ -356,7 +415,7 @@ public class AccountController {
                 Mono<Transaction> transactionMono = webClientBuilder
                         .build()
                         .post()
-                        .uri("http://localhost:8080/transactions/")
+                        .uri("http://transaction-service/transactions/")
                         .body(Mono.just(transaction), Transaction.class)
                         .retrieve()
                         .bodyToMono(Transaction.class);
