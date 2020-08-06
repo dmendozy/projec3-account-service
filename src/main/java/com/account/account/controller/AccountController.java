@@ -1,11 +1,12 @@
 package com.account.account.controller;
 
-import com.account.account.adds.Bank;
 import com.account.account.adds.Credit;
 import com.account.account.adds.Transaction;
 import com.account.account.model.Account;
 import com.account.account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,7 +15,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/accounts")
@@ -260,6 +260,7 @@ public class AccountController {
                                               @PathVariable("creditId") String creditId,
                                               @PathVariable("amount") double amount) {
         return accountService.getById(accountId)
+                .filter(account -> account.getCurrentBalance() >= amount)
                 .flatMap(account -> {
                     Transaction transaction = new Transaction("Pay credit from account interbank", amount, LocalDateTime.now(), accountId, creditId);
                     return webClientBuilder
@@ -273,16 +274,18 @@ public class AccountController {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount + "/" + bankAccountId)
+                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount + "/" + bankCreditId)
                             .retrieve()
-                            .bodyToMono(Account.class);
+                            .bodyToMono(Credit.class);
                 }).flatMap(credit -> {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount + "/" + bankCreditId)
+                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount + "/" + bankAccountId)
                             .retrieve()
-                            .bodyToMono(Credit.class);
+                            .bodyToMono(Account.class);
+                }).flatMap(credit -> {
+                    return Mono.just(ResponseEntity.status(HttpStatus.OK).body(credit));
                 });
     }
 
