@@ -239,16 +239,16 @@ public class AccountController {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount)
+                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount)
                             .retrieve()
-                            .bodyToMono(Account.class);
+                            .bodyToMono(Credit.class);
                 }).flatMap(credit -> {
                     return webClientBuilder
                             .build()
                             .put()
-                            .uri("http://credit-service/credits/pay/" + creditId + "/" + amount)
+                            .uri("http://account-service/accounts/withdraw/" + accountId + "/" + amount)
                             .retrieve()
-                            .bodyToMono(Credit.class);
+                            .bodyToMono(Account.class);
                 });
     }
 
